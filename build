@@ -1,0 +1,5 @@
+mpic++ -m64 -O3 -DSPLATT_LOG_LEVEL=10 -I../splatt/include -L../splatt/src -Wall splatt_cuda.cpp -lsplatter -c
+
+nvcc -arch sm_20 -c -I../splatt/include tet_vols.cu 
+
+mpic++ splatt_cuda.o tet_vols.o -o splatt_cuda_vol -L/opt/cuda/lib64 -lcudart -L../splatt/src -lsplatter
