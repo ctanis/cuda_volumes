@@ -39,3 +39,7 @@ cuda_compile(TETS_O tet_vols.cu)
 
 cuda_add_executable(tet_vols ${TETS_O} splatt_cuda.cpp)
 TARGET_LINK_LIBRARIES(tet_vols  ${libs})
+
+cuda_compile(MEM_O mem_check.cu)
+cuda_add_executable(cuda_mem ${MEM_O} mem_driver.cpp)
+target_link_libraries(cuda_mem ${libs})

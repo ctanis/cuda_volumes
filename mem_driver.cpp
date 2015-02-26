@@ -3,8 +3,7 @@
 
 using namespace splatter;
 
-double calculate_volumes(double* vertices, int num_vertices,
-                         int* tets, int num_tets);
+double copyit(double* vertices, int num_vertices);
 
 int main(int argc, char** argv)
 {
@@ -57,16 +56,15 @@ int main(int argc, char** argv)
 
 //calculate volume host side
     double host_vol = 0;
-    unsigned int i=0; while(i<tets.size()){
-	host_vol += geom::tet_volume(coords[tets[i]], coords[tets[i+1]], 
-				     coords[tets[i+2]], coords[tets[i+3]]);
-	i += 4;
+    unsigned int i=0; while(i<coords.size()){
+    	host_vol += coords[i][1]; //the y value
+	i++;
     }
     LLOG(0, "host answer:" << host_vol);
 
 //calculate volume device side
-    double device_vol =calculate_volumes((double*)&coords[0], coords.size(), (int*)&tets[0], tets.size()/4);
-    LLOG(0, "device answer: " << device_vol);
+    double device_vol =copyit((double*)&coords[0], coords.size());
+    LLOG(0, "device answer: " << device_vol); 
 }
 
 
