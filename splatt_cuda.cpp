@@ -56,10 +56,12 @@ int main(int argc, char** argv)
 
 
 //calculate volume host side
-    double host_vol = 0;
+    double host_vol = 0, tmp;
     unsigned int i=0; while(i<tets.size()){
-	host_vol += geom::tet_volume(coords[tets[i]], coords[tets[i+1]], 
-				     coords[tets[i+2]], coords[tets[i+3]]);
+	tmp = geom::tet_volume(coords[tets[i]], coords[tets[i+1]], 
+			       coords[tets[i+2]], coords[tets[i+3]]);
+	printf("%f\n",tmp);
+	host_vol += tmp; 
 	i += 4;
     }
     LLOG(0, "host answer:" << host_vol);
