@@ -104,7 +104,7 @@ double calculate_volumes(double* vertices, int num_vertices,
     CUDA_ERR_CHECK(cudaMemcpy(cuda_vertices, vertices, num_vertices*3*sizeof(double), cudaMemcpyHostToDevice));
     CUDA_ERR_CHECK(cudaMemcpy(cuda_tets, tets, num_tets*4*sizeof(int), cudaMemcpyHostToDevice));
 
-    wet_volume<<<blocksPerGrid, threadsPerBlock>>>(cuda_vertices, num_vertices, cuda_tets, num_tets, cuda_sizes);
+    tet_volume<<<blocksPerGrid, threadsPerBlock>>>(cuda_vertices, num_vertices, cuda_tets, num_tets, cuda_sizes);
     
 //    CUDA_ERR_CHECK(cudaGetLastError());
 //Previous line gives me this error: 'Error "invalid device function " at tet_vols.cu:53'
