@@ -44,16 +44,6 @@ double dot(double* a, double* b)
 }
 
 __global__
-void wet_volume(double* vertices, int num_vertices,
-                           int* tets, int num_tets, double* ans)
-{
-    int i = blockDim.x * blockIdx.x + threadIdx.x;
-
-    if (i >= num_tets) return;
-    else ans[i] = 60;
-}
-
-__global__
 void tet_volume(double* vertices, int num_vertices,
                            int* tets, int num_tets, double* ans)
 {
@@ -73,7 +63,7 @@ void tet_volume(double* vertices, int num_vertices,
 
     double* x = cross(sub(b,d,bPtr+6), sub(c,d,bPtr+3), bPtr); //product of cross, stored @ bPtr
 
-    ans[i] = dot(x, sub(a,d,bPtr+3))/6; //reuse of calculation buffer @ bPtr+3
+    ans[i] = std::abs(dot(x, sub(a,d,bPtr+3))/6); //reuse of calculation buffer @ bPtr+3
 }
 
 double calculate_volumes(double* vertices, int num_vertices,
@@ -116,7 +106,7 @@ double calculate_volumes(double* vertices, int num_vertices,
     for (int i=0; i<num_tets; i++)
     {
         ans += sizes[i];
-	printf("%f %d\n", sizes[i],i);
+	//	printf("%f %d\n", sizes[i],i);
     }
     return ans;
 }
