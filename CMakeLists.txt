@@ -19,21 +19,13 @@ macro(cuda_executables)
   endforeach()
 endmacro()
 
-include(parmetis.txt)
-
 cmake_minimum_required(VERSION 2.8)
 
-required(MPI CUDA)
+required( CUDA)
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_20,code=sm_20)
 
 set (CMAKE_CXX_FLAGS "-O3 -Wall -DSPLATT_LOG_LEVEL=10")
-
-include_directories ("../broke_splatt/include" ${MPI_CXX_INCLUDE_PATH} ${PARMETIS_INCLUDE_DIR})
-
-find_library(SPLATTER splatter ../broke_splatt/src)
-
-set(libs ${MPI_CXX_LIBRARIES} ${PARMETIS_LIBRARIES} ${SPLATTER}) # duma efence
 
 cuda_compile(TETS_O tet_vols.cu)
 
