@@ -40,7 +40,6 @@ set(libs ${splatter_lib} ${MPI_CXX_LIBRARIES} ${CUDA_LIBRARIES})
 include_directories (${splatter_include} ${MPI_CXX_INCLUDE_PATH})
 
 cuda_compile(TETS_O tet_vols.cu)
-
 cuda_add_executable(tet_vols ${TETS_O} splatt_cuda.cpp)
 TARGET_LINK_LIBRARIES(tet_vols  ${libs})
 

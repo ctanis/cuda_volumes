@@ -43,14 +43,22 @@ double dot(double* a, double* b)
     return ans;
 }
 
+const int threadsPerBlock = 256;//1024;
+
 __global__
 void tet_volume(double* vertices, int num_vertices,
-                           int* tets, int num_tets, double* ans)
+		int* tets, int num_tets, double* ans)
 {
-    int i = blockDim.x * blockIdx.x + threadIdx.x;
+  __shared__ double cache[threadsPerBlock];
 
-    if (i >= num_tets) return;
+    int ii = threadIdx.x;
+    int i = blockDim.x * blockIdx.x + ii;
 
+    if (i >= num_tets) 
+      {
+	cache[ii] = 0;
+      }
+    else{
     int j = i*4;
 
     double* a = &vertices[3*tets[j++]];
@@ -63,24 +71,40 @@ void tet_volume(double* vertices, int num_vertices,
 
     double* x = cross(sub(b,d,bPtr+6), sub(c,d,bPtr+3), bPtr); //product of cross, stored @ bPtr
 
-    ans[i] = std::abs(dot(x, sub(a,d,bPtr+3))/6); //reuse of calculation buffer @ bPtr+3
+    cache[ii] = std::abs(dot(x, sub(a,d,bPtr+3))/6); //reuse of calculation buffer @ bPtr+3
+    }
+
+    int add, div;
+    add = div = 1;
+
+    __syncthreads();
+
+    while ((div<<=1) <= threadsPerBlock)
+      {
+	if (!(ii%div))
+	  {
+	    cache[ii] += cache[ii+add];
+	  }
+	add<<=1;
+	__syncthreads();
+      }
+
+    if (! ii)
+      ans[blockIdx.x] = cache[0];
 }
 
 double calculate_volumes(double* vertices, int num_vertices,
                          int* tets, int num_tets)
 {
-
+    int blocksPerGrid =(num_tets + threadsPerBlock - 1) / threadsPerBlock;
     size_t available, total;
     CUDA_ERR_CHECK(cudaMemGetInfo(&available, &total));
 
     printf("Available: %luMB\nTotal: %luMB\n", available>>20, total>>20);
 
-    double* sizes = (double*)malloc(num_tets * sizeof(double));
+    double* sizes = (double*)malloc(blocksPerGrid* sizeof(double));
 
-    int threadsPerBlock = 256;//1024;
-    int blocksPerGrid =(num_tets + threadsPerBlock - 1) / threadsPerBlock;
-
-    printf("Blocks: %d\tThreads per block: %d\n",threadsPerBlock,blocksPerGrid);
+    printf("Blocks per grid: %d\tThreads per block: %d\n",blocksPerGrid,threadsPerBlock);
 
     double* cuda_vertices;
     int* cuda_tets;
@@ -88,7 +112,7 @@ double calculate_volumes(double* vertices, int num_vertices,
 
    CUDA_ERR_CHECK(cudaMalloc(&cuda_vertices, num_vertices*3*sizeof(double)));
    CUDA_ERR_CHECK(cudaMalloc(&cuda_tets, num_tets*4*sizeof(int)));
-   CUDA_ERR_CHECK(cudaMalloc(&cuda_sizes, num_tets*sizeof(double)));
+   CUDA_ERR_CHECK(cudaMalloc(&cuda_sizes, blocksPerGrid*sizeof(double)));
 
     // copy A,B to GPU
     CUDA_ERR_CHECK(cudaMemcpy(cuda_vertices, vertices, num_vertices*3*sizeof(double), cudaMemcpyHostToDevice));
@@ -99,11 +123,11 @@ double calculate_volumes(double* vertices, int num_vertices,
 //    CUDA_ERR_CHECK(cudaGetLastError());
 //Previous line gives me this error: 'Error "invalid device function " at tet_vols.cu:53'
 
-    CUDA_ERR_CHECK(cudaMemcpy(sizes, cuda_sizes, num_tets*sizeof(double), cudaMemcpyDeviceToHost));
+    CUDA_ERR_CHECK(cudaMemcpy(sizes, cuda_sizes, blocksPerGrid*sizeof(double), cudaMemcpyDeviceToHost));
     
     
     double ans = 0;
-    for (int i=0; i<num_tets; i++)
+    for (int i=0; i<blocksPerGrid; i++)
     {
         ans += sizes[i];
 	//	printf("%f %d\n", sizes[i],i);
